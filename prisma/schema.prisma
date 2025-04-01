@@ -1,0 +1,179 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  firstName            String
+  lastName             String
+  email                String                 @unique
+  mobile               String?
+  password             String
+  avatar               String?
+  role                 UserRole               @default(USER)
+  status               UserStatus             @default(ACTIVE)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  category             Category[]
+  comment              Comment[]
+  payment              Payment[]
+  reviewProvideService ReviewProvideService[]
+
+  @@map("users")
+}
+
+model Category {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  adminId        String?          @db.ObjectId
+  categoryName   String
+  imageUrl       String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  admin          User?            @relation(fields: [adminId], references: [id])
+  provideService ProvideService[]
+  sevice         Service[]
+
+  @@map("categories")
+}
+
+model DemoBook {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  firstName      String
+  lastName       String
+  email          String
+  phoneNumber    String?
+  selectDateTime DateTime
+  websiteUrl     String
+  reasonOfCall   String
+  shortPitch     String
+  message        String
+  bookedStatus   BookedStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("demobooks")
+}
+
+model ProvideService {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId           String?                @db.ObjectId
+  service              String
+  description          String
+  image                String
+  options              Json
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  category             Category?              @relation(fields: [categoryId], references: [id])
+  payment              Payment[]
+  reviewProvideService ReviewProvideService[]
+
+  @@map("provide-services")
+}
+
+model ReviewProvideService {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?         @db.ObjectId
+  serviceId   String?         @db.ObjectId
+  rating      Int
+  review      String
+  videoReview String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  service     ProvideService? @relation(fields: [serviceId], references: [id])
+  user        User?           @relation(fields: [userId], references: [id])
+
+  @@map("reviews")
+}
+
+model Service {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId  String?   @db.ObjectId
+  description String?
+  userAvatar  String?   @default("https://test.com")
+  name        String?
+  image       String?   @default("https://test.com")
+  likedIds    String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  category    Category? @relation(fields: [categoryId], references: [id])
+  comment     Comment[]
+
+  @@map("services")
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  serviceId String?  @db.ObjectId
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+  service   Service? @relation(fields: [serviceId], references: [id])
+
+  @@map("comments")
+}
+
+model Payment {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  paymentId       String          @unique
+  orderId         String?         @db.ObjectId
+  userId          String?         @db.ObjectId
+  totalAmount     Int
+  currency        String
+  customerDetails Json
+  paymentMethod   String
+  mode            String
+  service         String
+  time            String
+  paymentStatus   String
+  orderStatus     OrderStatus     @default(PENDING)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User?           @relation(fields: [userId], references: [id])
+  order           ProvideService? @relation(fields: [orderId], references: [id])
+
+  @@map("payment")
+}
+
+model Portfolio {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId    String
+  description   String
+  userAvatar    String?
+  protfolioType String
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("portfolio")
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  DELIVERED
+  CANCELLED
+}
+
+enum BookedStatus {
+  PENDING
+  CONDUCTED
+  CANCELLED
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
